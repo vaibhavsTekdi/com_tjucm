@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 jimport('joomla.filesystem.file');
 
 require_once JPATH_SITE . "/components/com_tjfields/filterFields.php";
+require_once JPATH_SITE . "/components/com_tjucm/helpers/tjucm.php";
 
 /**
  * Item controller class.
@@ -211,6 +212,34 @@ class TjucmControllerItemForm extends JControllerForm
 		$data = $app->input->get('jform', array(), 'array');
 		$data['id'] = empty($data['id']) ? 0 : (int) $data['id'];
 		$all_jform_data = $data;
+
+		// Check ownership
+		if ($data['id'] != 0)
+		{
+			$checkOwnerShip = TjucmHelpersTjucm::checkOwnershipOfItemFormData($data['id'], $data['client']);
+
+			if (empty($checkOwnerShip))
+			{
+				if ($this->isajax)
+				{
+					$this->setError(JText::_('JERROR_ALERTNOAUTHOR'));
+					$this->setMessage($this->getError(), 'error');
+
+					$this->setRedirect(
+						JRoute::_(
+							'index.php?option=com_tjucm&view=items' . $this->appendUrl
+							. $this->getRedirectToListAppend(), false
+						)
+					);
+
+					return false;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
 
 		// Get file information
 		$files = $app->input->files->get('jform');

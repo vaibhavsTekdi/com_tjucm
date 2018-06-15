@@ -42,10 +42,23 @@ $editRecordId              = $jinput->input->get("id", '', 'INT');
 $baseUrl                   = $jinput->input->server->get('REQUEST_URI', '', 'STRING');
 $calledFrom                = (strpos($baseUrl, 'administrator')) ? 'backend' : 'frontend';
 $layout                    = ($calledFrom == 'frontend') ? 'default' : 'edit';
+$client                    = $jinput->input->get('client');
 $is_saved                  = $jinput->input->get("success", '', 'INT');
 $fieldsets_counter_deafult = 0;
 $setnavigation             = false;
 $itemState                 = $this->item->state;
+
+// Check ownership
+if ($editRecordId)
+{
+	require_once JPATH_SITE . "/components/com_tjucm/helpers/tjucm.php";
+	$checkOwnerShip = TjucmHelpersTjucm::checkOwnershipOfItemFormData($editRecordId, $client);
+
+	if (empty($checkOwnerShip))
+	{
+		return JError::raiseError(404, JText::_('JERROR_ALERTNOAUTHOR'));
+	}
+}
 
 ?>
 <script type="text/javascript">

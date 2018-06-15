@@ -75,4 +75,34 @@ class TjucmHelpersTjucm
 		JText::script('COM_TJUCM_FIELDS_VALIDATION_ERROR_DATE', true);
 		JText::script('COM_TJUCM_FIELDS_VALIDATION_ERROR_NUMBER', true);
 	}
+
+	/**
+	 * Check if owner of the itemform data
+	 *
+	 * @param   int     $pk      The item's id
+	 *
+	 * @param   string  $client  client
+	 *
+	 * @return  int  user id
+	 */
+	public static function checkOwnershipOfItemFormData($pk, $client)
+	{
+		$user = JFactory::getUser();
+
+		$db = JFactory::getDbo();
+		$query = $db->getQuery(true);
+
+		$query
+			->select($db->quoteName('id'))
+			->from($db->quoteName('#__tj_ucm_data'))
+			->where($db->quoteName('id') . ' = ' . (int) $pk)
+			->where($db->quoteName('client') . ' = ' . $db->quote($client))
+			->where($db->quoteName('created_by') . ' = ' . (int) $user->id);
+
+		$db->setQuery($query);
+
+		$result = $db->loadResult();
+
+		return $result;
+	}
 }
