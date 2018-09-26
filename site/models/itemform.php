@@ -446,6 +446,21 @@ class TjucmModelItemForm extends JModelForm
 			return false;
 		}
 
+		// Get if user is allowed to save the content
+		$tjUcmModelType = JModelLegacy::getInstance('Type', 'TjucmModel');
+		$typeData = $tjUcmModelType->getItem($ucmTypeId);
+		$allowedCount = $typeData->allowed_count;
+		$userId = $user->id;
+
+		$isAllowedToAdd = $this->allowedToAddTypeData($userId, $this->client, $allowedCount);
+
+		if ($isAllowedToAdd !== true)
+		{
+			throw new Exception(JText::sprintf('COM_TJUCM_ALLOWED_COUNT_LIMIT', $allowedCount), 403);
+
+			return false;
+		}
+
 		$data['type_id'] = $this->common->getDataValues('#__tj_ucm_types', 'id AS type_id', 'unique_identifier = "' . $this->client . '"', 'loadResult');
 
 		$table = $this->getTable();
