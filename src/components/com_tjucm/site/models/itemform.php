@@ -55,6 +55,8 @@ class TjucmModelItemForm extends JModelForm
 	{
 		$this->common  = new TjucmFunList;
 
+		$this->isajax = ($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') ? true : false;
+
 		parent::__construct($config);
 	}
 
@@ -425,6 +427,29 @@ class TjucmModelItemForm extends JModelForm
 
 		if ($ucmTypeId)
 		{
+			// Check if user is allowed to save the content
+			$typeData = $tjUcmModelType->getItem($ucmTypeId);
+			$allowedCount = $typeData->allowed_count;
+
+			// 0 : add unlimited records against this UCM type
+			$allowedCount = empty($allowedCount) ? 0 : $allowedCount;
+			$userId = $user->id;
+			$allowedToAdd = $this->allowedToAddTypeData($userId, $this->client, $allowedCount);
+
+			if (!$allowedToAdd && $typeItemId == 0)
+			{
+				if ($this->isajax)
+				{
+					$message = JText::sprintf('COM_TJUCM_ALLOWED_COUNT_LIMIT', $allowedCount);
+					$app->enqueueMessage($message, 'warning');
+					echo new JResponseJson;
+					jexit();
+				}
+
+				return false;
+			}
+
+
 			if ($typeItemId)
 			{
 				// Check the user can edit this item
@@ -460,21 +485,6 @@ class TjucmModelItemForm extends JModelForm
 		if ($authorised !== true)
 		{
 			throw new Exception(JText::_('COM_TJUCM_ERROR_MESSAGE_NOT_AUTHORISED'), 403);
-
-			return false;
-		}
-
-		// Get if user is allowed to save the content
-		$tjUcmModelType = JModelLegacy::getInstance('Type', 'TjucmModel');
-		$typeData = $tjUcmModelType->getItem($ucmTypeId);
-		$allowedCount = $typeData->allowed_count;
-		$userId = $user->id;
-
-		$isAllowedToAdd = $this->allowedToAddTypeData($userId, $this->client, $allowedCount);
-
-		if ($isAllowedToAdd !== true)
-		{
-			throw new Exception(JText::sprintf('COM_TJUCM_ALLOWED_COUNT_LIMIT', $allowedCount), 403);
 
 			return false;
 		}
